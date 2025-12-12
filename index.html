@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset = "utf-8">
+<meta name="viewport" content="initial-scale = 1, maximum-scale=1, user-scalable=no">
+    <title>Final Project</title>
+    <style>
+    html,
+        body {
+            height: 100%;
+            width: 100%;
+            background-color: whitesmoke;
+            padding:0;
+            margin:0;
+        }
+        
+        #viewDiv {
+            float:left;
+            padding: 0;
+            left: 0;
+            margin: 0;
+            height: 84%;
+            width: 42%;
+        }
+        
+        #titleDiv{
+            float: left;
+            height: 40px;
+            width: 40%;
+            background-color: whitesmoke;
+            color: black;
+            text-align: center;
+            font-weight: 400;
+            font-size: 25px
+        }
+        
+        #titleLegend{
+            float: left;
+            display: block;
+            height: 40px;
+            width: 20%;
+            height: 31px;
+            background color: whitesmoke;
+            text-align: center;
+            color: black;
+            font-weight:400;
+            font-size:25px
+        }
+        
+        h2 {
+            text-align: center;
+            color: black;
+            float: right
+        }
+        
+        #header {
+            width: 100%;
+            background-color: lightslategrey;
+            height: 10%;
+            text-align: center;
+            color: black;
+        }
+        
+        #viewDiv2 {
+            float: right;
+            padding:0;
+            right: 0;
+            margin: 0;
+            height:40%;
+            width: 37%;
+        }
+        
+        #viewDiv3 {
+            float: right;
+            padding:0;
+            right:0;
+            margin:0;
+            height:40%;
+            width:37%;
+        }
+        
+        #extentDiv {
+            border: 2px solid red;
+            position: absolute;
+            z-index: 2;
+        }
+        
+        #legendDiv {
+            float: left;
+            right: 0;
+            margin: 0;
+            height: 84%;
+            width: 20%;
+            overflow-y:auto;
+        }
+        
+        #sublegendDiv{
+            float:left;
+            right:0;
+            margin:0;
+            width:100%;
+        }
+        
+        #sublegendDiv2{
+            float:left;
+            right:0;
+            margin:0;
+            width:100%;
+        }
+        
+        #sublegendDiv3{
+            float:left;
+            right:0;
+            margin:0;
+            width:100%;
+        }
+        
+        #brTitle {
+            float: right;
+            height: 40px;
+            width: 35%;
+            background-color: whitesmoke;
+            color: black;
+            text-align: center;
+            font-weight: 400;
+            font-size: 25px
+        }
+        
+    </style>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.34/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.34/"></script>
+    <script>
+    require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/widgets/Legend",
+        "esri/widgets/LayerList"
+        
+    ], function(Map, MapView, FeatureLayer, Legend, LayerList){
+       
+        var map = new Map({
+            basemap:"streets"
+        });
+        
+        var view = new MapView({
+            container:"viewDiv",
+            map: map,
+            zoom:8,
+            center:[-90.5,30]
+        });
+        
+        var cancer = new FeatureLayer({
+            portalItem:{
+                id:"0e69ad82dbdf4d37834c5be341d67b4b"
+            },
+            title:"Cancer Incidences per 10,000 people"
+        });
+        
+        map.add(cancer);
+        
+        var map2 = new Map({
+            basemap:"streets"
+        });
+        
+        var view2 = new MapView({
+            container: "viewDiv2",
+            map: map2,
+            zoom: 8,
+            center: [-90.5, 30],
+            constraints: {
+                rotationEnabled: false
+            }
+        });
+        
+        var pov = new FeatureLayer({
+            portalItem:{
+                id:"751a187448b24b278daad93a084aa594"
+            },
+            title: "Percent of Population in Poverty"
+        });
+        
+        map2.add(pov);
+        
+        var map3 = new Map({
+            basemap:"streets"
+        });
+        
+        var view3 = new MapView({
+            container: "viewDiv3",
+            map: map3,
+            zoom: 8,
+            center: [-90.5, 30],
+            constraints: {
+                rotationEnabled: false
+            }
+        });
+        
+        var pop = new FeatureLayer({
+            portalItem:{
+                id:"5dee2f03b94f4271b9a8879cbfe048a2"
+            },
+            title:"Percent of Total Louisiana Population"
+        });
+        
+        map3.add(pop);
+        
+        var tri = new FeatureLayer({
+            portalItem:{    
+                id:"16e10394f37e430baaa3e77140b61fb0"
+            },
+            title: "Toxic Release Inventory"
+        });
+        
+        map.add(tri);
+        
+        var sf = new FeatureLayer({
+            portalItem:{
+                id:"d6e1591d9a424f1fa6d95a02095a06d7"
+            }
+        });
+        
+        map.add(sf);
+        
+        const views = [view, view2, view3];
+            let active;
+        
+            const sync = (source) => {
+                if (!active || !active.viewpoint || active !== source) {
+                    return;
+                }
+                
+                for (const view of views) {
+                    if (view !== active) {
+                        view.viewpoint = active.viewpoint;
+                    }
+                }
+            };
+        
+        for (const view of views){
+            view.watch(["interacting", "animation"], () => {
+                active = view;
+                sync(active);
+            });
+            
+            view.watch("viewpoint", () => sync(view));
+        
+        };
+        
+        const layerList = new LayerList({
+            container:"sublegendDiv",    
+            view: view,
+                listItemCreatedFunction: function(event){
+                    const item = event.item;
+                    if (item.layer.type !="group") {
+                        item.panel = {
+                            content: "legend",
+                            open: true
+                        };
+                    }
+                }
+            });
+        
+        const layerList2 = new LayerList({
+            container:"sublegendDiv2",    
+            view: view2,
+                listItemCreatedFunction: function(event){
+                    const item = event.item;
+                    if (item.layer.type !="group") {
+                        item.panel = {
+                            content: "legend",
+                            open: true
+                        };
+                    }
+                }
+            });
+        
+        const layerList3 = new LayerList({
+            container:"sublegendDiv3",    
+            view: view3,
+                listItemCreatedFunction: function(event){
+                    const item = event.item;
+                    if (item.layer.type !="group") {
+                        item.panel = {
+                            content: "legend",
+                            open: true
+                        };
+                    }
+                }
+            });
+    });
+        
+    </script>
+    </head>
+    <body>
+    <div id ="header"; style="display:table;height:15px;overflow:hidden;"><h1 style="vertical-align:middle">Cancer Alley: cancer, pollution, and poverty in Louisiana</h1></div>
+    <div id="titleLegend">Legend</div>
+    <div id="titleDiv">Cancer Incidence per 10,000 people</div>
+    <div id="titleDiv">Percent of Population in Poverty</div>
+    <div id="legendDiv"><div id="sublegendDiv"></div><div id="sublegendDiv2"></div><div id="sublegendDiv3"></div></div>
+    <div id="viewDiv"></div>
+    <div id="viewDiv2"></div>
+    <div id="brTitle">Percent of Total Louisiana Population</div>
+    <div id="viewDiv3"></div>
+    </body>
+</html>
